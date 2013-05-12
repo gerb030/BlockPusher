@@ -1,0 +1,31 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+	<title>Page Title</title> 
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+
+	<script type="text/javascript" src="js/easeljs.js"></script>
+	<script type="text/javascript" src="js/Game.js"></script>
+	<link rel="stylesheet" href="block.css">
+	<link rel="shortcut icon" href="favicon.ico">
+</head> 
+
+<body onload='init();'>
+<h1>BlockPusher</h1>
+<canvas id='stage' width=800 height=600 onmousedown="Game.handleMouseEvent(event);" onmousemove="Game.handleMouseEvent(event);" onmouseup="Game.handleMouseEvent(event);"></canvas>
+
+<script>
+var stage;
+function init() {
+	stage = new createjs.Stage(document.getElementById("stage"));
+	createjs.Touch.enable(stage);
+	Game.init(stage, document.getElementById("stage"));
+	Game.startRound();
+}
+</script> 
+</body>
+</html>
+<!--
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum- scale=1.0; user-scalable=0;"/>
+-->

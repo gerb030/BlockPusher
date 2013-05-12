@@ -1,0 +1,43 @@
+body {
+	background-color: #202030;
+	font: 11pt helvetica;
+	color: black;
+	letter-spacing: -1pt;
+	background-image:url('tile.jpg');
+	background-repeat:repeat;
+	background-attachment:fixed;
+}
+
+h1 {
+	width:100%;
+	text-align:center;
+}
+
+#stage {
+	margin-top:8px;
+	border: 2px solid white;
+	color: #CCCCCC;
+	padding-left: 8px;
+	-moz-border-radius: 15px;
+	border-radius: 15px;
+	background-color: #606060; /* #80a8fc; #5078ec*/;
+	text-align:center;
+}
+
+#userMoves {
+	color:white;
+	font: 18pt helvetica;
+	position: absolute;
+	top: 102px;
+	left: 440px;
+	letter-spacing: 2px;
+}
+
+#userScore {
+	color:white;
+	font: 18pt helvetica;
+	position: absolute;
+	top: 102px;
+	left: 180px;
+	letter-spacing: 2px;
+}
