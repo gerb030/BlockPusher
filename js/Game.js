@@ -3,13 +3,13 @@ var Gesture = {
 	_startY : null,	
 	_endX : null,	
 	_endY : null,
-	_movement : null,
+	_orientation : null,
 	_element : null,
 	_direction : null,
 	start : function(startX, startY) {
 		this._endX = null;
 		this._endY = null;
-		this._movement = null;
+		this._orientation = null;
 		this._element = null;
 		this._startX = startX,	
 		this._startY = startY,	
@@ -24,22 +24,22 @@ var Gesture = {
 		this.parse();
 	},
 	parse : function() {
-		var startRow = Math.floor(this._startY / Game._tileWidth)-1; 
-		var endRow = Math.floor(this._endY / Game._tileWidth)-1;
+		var startRow = Math.ceil(this._startY / Game._tileWidth)-1; 
+		var endRow = Math.ceil(this._endY / Game._tileWidth)-1;
 		var startCol = Math.floor(this._startX / Game._tileWidth); 
 		var endCol = Math.floor(this._endX / Game._tileWidth);
 		if (startRow == endRow) {
-			this._movement = 'horizontal';
+			this._orientation = 'horizontal';
 			this._element = startRow;
 			this._direction = (endCol >= startCol) ? 1 : -1;
 		} else if (startCol == endCol) {
-			this._movement = 'vertical';
+			this._orientation = 'vertical';
 			this._element = startCol;
 			this._direction = (endRow >= startRow) ? 1 : -1;
 		}
 	},
-	getMovement : function() {
-		return this._movement;
+	getOrientation : function() {
+		return this._orientation;
 	},
 	getElement : function() {
 		return this._element;
@@ -121,12 +121,12 @@ var Game = {
 		this._stage.update();
 	},
 	_handleMove : function() {
-		switch(this._gesture.getMovement()) {
+		switch(this._gesture.getOrientation()) {
 			case 'vertical':
-				this._moveCol(this._gesture.getElement(), this._gesture.getDirection());
+				this._moveCol(this._gesture.getElement(), this._gesture.getOrientation(), this._gesture.getDirection());
 				break;
 			case 'horizontal':
-				this._moveRow(this._gesture.getElement(), this._gesture.getDirection());
+				this._moveRow(this._gesture.getElement(), this._gesture.getOrientation(), this._gesture.getDirection());
 				break;
 			default:
 				// no move - do nothing
@@ -355,54 +355,98 @@ var Game = {
 	},
 	_moveCol : function(colNr, direction) {
 	},
-	_moveRow : function(rowNr, direction, 0) {
+	_moveRow : function(rowNr, orientation, direction, phase) {
 		var row = this._matrix[rowNr];
-		var yPos = rowNr*this._tilePos+8+this._offsetTop;
+		var oldCell = null;
 		switch(direction) {
 			// right-to-left
 			case -1:
-//				var x = row.length;
-//				for (var r in row) {
-//					row[r].x--;
-//				}
-//				var xPos = x*this._tilePos+this._offsetLeft;
-//				var data = this._generateRandomTile(xPos, yPos);
-//				row[0] = {'c' : data[1], 's' : data[0], 'y' : row, 'x' : x};
-//				row[0].s.set({x:xPos,y:yPos});
+				oldCell = row.shift();
 				break;
 			// left-to-right
 			case 1:
-				var x = 0;
-				for (var r in row) {
-					row[r].y++;
-					console.log("doe het");
-					if (row[r].s!=null) {
-						row[r].s.set({y:(row[r].y+1)*this._tilePos+8+this._offsetTop});
-					};
-				}
-				this._stage.update();
-				var xPos = x*this._tilePos+this._offsetLeft;
-				row.pop();
-				var data = this._generateRandomTile(xPos, yPos);
-				row[row.length] = {'c' : data[1], 's' : data[0], 'y' : row, 'x' : x};
+				oldCell = row.pop();
 				break;
+			// no move
 			default:
-				return;
+				break;
 		}
-	},
-	_animRow : function(row, xPos, direction) {
-		var max = this._tileWidth+this._tile;
-		if (xPos < max) {
-			
+		if (oldCell.s != null) {
+			setTimeout(function(){Game._fadeOutCell(oldCell.c, oldCell.s, orientation, direction, 100, 5);}, 10);
 		} else {
-			switch(direction) {
-				case 1:
-					break;
-				case -1:
-					break;
-			}
+			console.log("move next item in row");
+		}
+		
+
+//		var yPos = rowNr*this._tilePos+8+this._offsetTop;
+//		switch(direction) {
+//			// right-to-left
+//			case -1:
+////				var x = row.length;
+////				for (var r in row) {
+////					row[r].x--;
+////				}
+////				var xPos = x*this._tilePos+this._offsetLeft;
+////				var data = this._generateRandomTile(xPos, yPos);
+////				row[0] = {'c' : data[1], 's' : data[0], 'y' : row, 'x' : x};
+////				row[0].s.set({x:xPos,y:yPos});
+//				break;
+//			// left-to-right
+//			case 1:
+//				var x = 0;
+//				for (var r in row) {
+//					row[r].y++;
+//					console.log("doe het");
+//					if (row[r].s!=null) {
+//						row[r].s.set({y:(row[r].y+1)*this._tilePos+8+this._offsetTop});
+//					};
+//				}
+//				this._stage.update();
+//				var xPos = x*this._tilePos+this._offsetLeft;
+//				row.pop();
+//				var data = this._generateRandomTile(xPos, yPos);
+//				row[row.length] = {'c' : data[1], 's' : data[0], 'y' : row, 'x' : x};
+//				break;
+//			default:
+//				return;
+//		}
+	},
+	_fadeOutCell : function(colour, shape, orientation, direction, currentOpacity, opacityStep) {
+		if (currentOpacity >= 0.01) {
+			// fade down opacity some more
+			currentOpacity = currentOpacity - opacityStep;
+			// WHY O WHY IS THE X AND Y ALWAYS ZERO HERE??
+			var oldX = shape.x+(orientation=='horizontal' ? direction : 0);
+			var oldY = shape.y+(orientation=='vertical' ? direction : 0);
+			console.log(shape.x);
+			shape.graphics = new createjs.Graphics();
+			shape.graphics.beginFill(createjs.Graphics.getRGB(this._colours[colour]['fill'][0], this._colours[colour]['fill'][1], this._colours[colour]['fill'][2], currentOpacity)).drawRoundRect(0, 0, 64, 64, 6);
+			shape.x = oldX;
+			shape.y = oldY;
+			this._stage.update();
+			setTimeout(function(){Game._fadeOutCell(colour, shape, orientation, direction*1.10, currentOpacity, opacityStep);}, 10);
+		} else {
+			// remove all children
+			this._stage.removeChild(shape);
+			this._stage.update();
 		}
 	},
+//	_moveRowNext : function(row, direction, current, max) {
+//		var row = this._matrix[rowNr];
+//	},
+//	_animRow : function(row, xPos, direction) {
+//		var max = this._tileWidth+this._tile;
+//		if (xPos < max) {
+//			
+//		} else {
+//			switch(direction) {
+//				case 1:
+//					break;
+//				case -1:
+//					break;
+//			}
+//		}
+//	},
 	_colours : [
 	    {
 	    	'fill' : [255, 204, 51],
