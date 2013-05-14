@@ -123,10 +123,10 @@ var Game = {
 	_handleMove : function() {
 		switch(this._gesture.getOrientation()) {
 			case 'vertical':
-				this._moveCol(this._gesture.getElement(), this._gesture.getOrientation(), this._gesture.getDirection());
+				this._moveCol(0);
 				break;
 			case 'horizontal':
-				this._moveRow(this._gesture.getElement(), this._gesture.getOrientation(), this._gesture.getDirection());
+				this._moveRow(0);
 				break;
 			default:
 				// no move - do nothing
@@ -349,32 +349,50 @@ var Game = {
 	_generateRandomTile : function(x, y) {
 		var c = Math.floor(Math.random()*this._colours.length);
 		sq = new createjs.Shape();
-		sq.graphics.beginFill(createjs.Graphics.getRGB(this._colours[c]['fill'][0], this._colours[c]['fill'][1], this._colours[c]['fill'][2])).drawRoundRect(x, y, 64, 64, 6);
+		sq.graphics.beginFill(createjs.Graphics.getRGB(this._colours[c]['fill'][0], this._colours[c]['fill'][1], this._colours[c]['fill'][2])).drawRoundRect(null, null, 64, 64, 6);
+		sq.x = x;
+		sq.y = y;
 		this._stage.addChild(sq);
 		return [sq,c];
 	},
-	_moveCol : function(colNr, direction) {
+	_moveCol : function(index) {
+		var colNr = this._gesture.getElement();
+		var orientation = this._gesture.getOrientation();
+		var direction = this._gesture.getDirection();
+		// TODO: column moving
 	},
-	_moveRow : function(rowNr, orientation, direction, phase) {
+	_moveRow : function(index) {
+		var rowNr = this._gesture.getElement();
+		var orientation = this._gesture.getOrientation();
+		var direction = this._gesture.getDirection();
 		var row = this._matrix[rowNr];
+		if (row == undefined) return;
 		var oldCell = null;
-		switch(direction) {
-			// right-to-left
-			case -1:
-				oldCell = row.shift();
+		switch(index) {
+			case 0:
+				switch(direction) {
+					// right-to-left
+					case -1:
+						oldCell = row.shift();
+						break;
+					// left-to-right
+					case 1:
+						oldCell = row.pop();
+						break;
+					// no move
+					default:
+						break;
+				}
+				if (oldCell != null && oldCell.s != null) {
+					setTimeout(function(){Game._fadeOutCell(oldCell.c, oldCell.s, orientation, direction, 100, 5);}, 10);
+				} else {
+					console.log("HOW THE FUCK DID YOU GET HERE");
+				}
 				break;
-			// left-to-right
-			case 1:
-				oldCell = row.pop();
-				break;
-			// no move
 			default:
+				console.log('now at index: '+index);
+			// TODO : deal with incoming changes
 				break;
-		}
-		if (oldCell.s != null) {
-			setTimeout(function(){Game._fadeOutCell(oldCell.c, oldCell.s, orientation, direction, 100, 5);}, 10);
-		} else {
-			console.log("move next item in row");
 		}
 		
 
@@ -415,12 +433,10 @@ var Game = {
 		if (currentOpacity >= 0.01) {
 			// fade down opacity some more
 			currentOpacity = currentOpacity - opacityStep;
-			// WHY O WHY IS THE X AND Y ALWAYS ZERO HERE??
 			var oldX = shape.x+(orientation=='horizontal' ? direction : 0);
 			var oldY = shape.y+(orientation=='vertical' ? direction : 0);
-			console.log(shape.x);
 			shape.graphics = new createjs.Graphics();
-			shape.graphics.beginFill(createjs.Graphics.getRGB(this._colours[colour]['fill'][0], this._colours[colour]['fill'][1], this._colours[colour]['fill'][2], currentOpacity)).drawRoundRect(0, 0, 64, 64, 6);
+			shape.graphics.beginFill(createjs.Graphics.getRGB(this._colours[colour]['fill'][0], this._colours[colour]['fill'][1], this._colours[colour]['fill'][2], currentOpacity/100)).drawRoundRect(0, 0, 64, 64, 6);
 			shape.x = oldX;
 			shape.y = oldY;
 			this._stage.update();
@@ -429,6 +445,7 @@ var Game = {
 			// remove all children
 			this._stage.removeChild(shape);
 			this._stage.update();
+			this._moveRow(1);
 		}
 	},
 //	_moveRowNext : function(row, direction, current, max) {
