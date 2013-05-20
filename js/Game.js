@@ -362,39 +362,92 @@ var Game = {
 		// TODO: column moving
 	},
 	_moveRow : function(index) {
+		console.log('now at index: '+index);
 		var rowNr = this._gesture.getElement();
-		var orientation = this._gesture.getOrientation();
 		var direction = this._gesture.getDirection();
 		var row = this._matrix[rowNr];
 		if (row == undefined) return;
 		var oldCell = null;
-		switch(index) {
-			case 0:
-				switch(direction) {
-					// right-to-left
-					case -1:
-						oldCell = row.shift();
-						break;
-					// left-to-right
-					case 1:
-						oldCell = row.pop();
-						break;
-					// no move
-					default:
-						break;
-				}
-				if (oldCell != null && oldCell.s != null) {
-					setTimeout(function(){Game._fadeOutCell(oldCell.c, oldCell.s, orientation, direction, 100, 5);}, 10);
-				} else {
-					console.log("HOW THE FUCK DID YOU GET HERE");
-				}
+		switch(direction) {
+			// right-to-left
+			case -1:
+				oldCell = row.shift();
 				break;
+			// left-to-right
+			case 1:
 			default:
-				console.log('now at index: '+index);
-			// TODO : deal with incoming changes
+				oldCell = row.pop();
 				break;
 		}
-		
+		switch(index) {
+			case 0:
+				if (oldCell != null && oldCell.s != null) {
+					setTimeout(function(){Game._fadeOutCell(oldCell.c, oldCell.s, 100, 5);}, 10);
+					break;
+				}
+			default:
+				if (oldCell == undefined) {
+					// NO MORE MOVES, let's create a new cell and return control
+					console.log("NO MORE MOVES (index:"+index+"), let's create a new cell and return control")
+				} else if (oldCell.s == null && row.length > 1) {
+					switch(direction) {
+						// right-to-left
+						case -1:
+							oldCell = row.shift();
+							break;
+						// left-to-right
+						default:
+						case 1:
+							oldCell = row.pop();
+							break;
+					}
+				} else {
+					var endPos = null;
+					if (direction == -1) {
+						endPos = oldCell.s.x-Game._tileWidth-Game._tileSpacing;
+					} else {
+						endPos = oldCell.s.x+Game._tileWidth+Game._tileSpacing;
+					} 
+					this._moveCell(index, oldCell.c, oldCell.s, endPos);
+				}
+				// TODO : deal with incoming changes
+				break;
+		}
+	},
+	_moveCell : function(index, colour, shape, endPos) {
+		var orientation = this._gesture.getOrientation();
+		var direction = this._gesture.getDirection();
+		switch (orientation) {
+			case 'horizontal':
+				if (direction == -1) {
+					if (shape.x > endPos) {
+						shape.x = shape.x-10; 
+						this._stage.update();
+						setTimeout(function(){Game._moveCell(index, colour, shape, endPos);}, 10);
+					} else {
+						shape.x = endPos; 
+						this._stage.update();
+						index++;
+						setTimeout(function(){Game._moveRow(index);}, 10);
+					}
+				} else {
+					if (shape.x < endPos) {
+						shape.x = shape.x+10; 
+						this._stage.update();
+						setTimeout(function(){Game._moveCell(index, colour, shape, endPos);}, 10);
+					} else {
+						shape.x = endPos; 
+						this._stage.update();
+						index++;
+						setTimeout(function(){Game._moveRow(index);}, 10);
+					}
+				}
+				break;
+			case 'vertical':
+				// TODO: column handling
+				break;
+		}
+	},
 
 //		var yPos = rowNr*this._tilePos+8+this._offsetTop;
 //		switch(direction) {
@@ -428,9 +481,10 @@ var Game = {
 //			default:
 //				return;
 //		}
-	},
-	_fadeOutCell : function(colour, shape, orientation, direction, currentOpacity, opacityStep) {
+	_fadeOutCell : function(colour, shape, currentOpacity, opacityStep) {
 		if (currentOpacity >= 0.01) {
+			var orientation = this._gesture.getOrientation(); 
+			var direction = this._gesture.getDirection(); 
 			// fade down opacity some more
 			currentOpacity = currentOpacity - opacityStep;
 			var oldX = shape.x+(orientation=='horizontal' ? direction : 0);
