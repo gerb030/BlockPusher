@@ -9,6 +9,9 @@ function Cell(x, y, colourIndex, visible, alphaPercentage) {
 	this.getId = function() {
 		return this.x+'.'+this.y;
 	};
+	this.getShapes = function() {
+		return this._shapes;
+	};
 	this.render = function() {
 		this._shapes['outer'] = new createjs.Shape();
 		this._shapes['outer'].graphics.beginFill(createjs.Graphics.getRGB(
@@ -58,10 +61,10 @@ function Cell(x, y, colourIndex, visible, alphaPercentage) {
 		consonants : ['b','c','d','f','g','h','j','k','l','m','n','p','q','r','s','t','v','w','x','y','z'],
 		vowels : ['a','e','i','o','u']
 	};
-	this.fadeOut = function(timer, opacityStep, deltaX, deltaY, callback) {
+	this.fadeOut = function(opacityStep, deltaX, deltaY, source) {
 		deltaX  = (deltaX == undefined) ? 0 : deltaX;
 		deltaY  = (deltaY == undefined) ? 0 : deltaY;
-		if (this._alphaPercentage >= 0) {
+		if (this._alphaPercentage >= 0.01) {
 			for (var s in this._shapes) {
 				var shape = this._shapes[s];//.set({alpha:this._alphaPercentage/100});
 				var oldX = shape.x+deltaX;
@@ -85,13 +88,14 @@ function Cell(x, y, colourIndex, visible, alphaPercentage) {
 			this._alphaPercentage = this._alphaPercentage-opacityStep;
 			var myX = this.x;
 			var myY = this.y;
-			setTimeout(function(){Game.matrix.getCell(myX, myY).fadeOut(timer, opacityStep, deltaX, deltaY, callback);}, timer);
+			setTimeout(function(){Game.matrix.getCell(myX, myY).fadeOut(opacityStep, deltaX, deltaY, source);}, Config.animTimerFadeOutStep);
 		} else {
-			Game.matrix.removeCell(this.x, this.y);
 			for (var s in this._shapes) {
 				Game.stage.removeChild(this._shapes[s]);
 			}
-			setTimeout(function(){callback}, 50);
+			Game.stage.update();
+			Game.matrix.removeCell(this.x, this.y);
+			setTimeout(function(){source.onFinishFadeSet()}, Config.animTimerFadeOut);
 		}
 		return this;
 

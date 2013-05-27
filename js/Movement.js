@@ -12,7 +12,7 @@ var Movement = {
 		return this;
 	},
 	shiftRow : function() {
-		var row = Game.matrix.getRow(this._gesture.getElement());
+		var row = Game.matrix.getRow(Game.gesture.getElement());
 		switch(Game.gesture.getDirection()) {
 			case -1:
 				currentCell = 0;

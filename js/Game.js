@@ -1,13 +1,3 @@
-var Config = {
-	_tilePos : 0,
-	_tileWidth : 72,
-	_tileSpacing : 8,
-	_offsetTop : 64,
-	_offsetLeft : 82,
-	init : function() {
-		this._tilePos = this._tileSpacing+this._tileWidth;
-	},
-};
 var Game = {
 	_matrixWidth : 8,
 	_matrixHeight: 6,
@@ -170,7 +160,7 @@ var Game = {
 					m++;
 				}
 				if (row.length > 2 && !this._areCoordinatesAlreadyMatched(row)) {
-					this._hits.push(row);
+					this._hits.push(new CellSet(row));
 				}
 				// Y-axis
 				row = [];
@@ -183,7 +173,7 @@ var Game = {
 					m++;
 				}
 				if (row.length > 2 && !this._areCoordinatesAlreadyMatched(row)) {
-					this._hits.push(row);
+					this._hits.push(new CellSet(row));
 				}
 				// diagonals
 				row = [];
@@ -196,36 +186,26 @@ var Game = {
 					m++;
 				}
 				if (row.length > 2 && !this._areCoordinatesAlreadyMatched(row)) {
-					this._hits.push(row);
+					this._hits.push(new CellSet(row));
 				}
 			}
 		}
 		this._turnScore = 0;
-		setTimeout(function(){Game._parseNextHit();}, 20);
+		setTimeout(function(){Game._parseNextHit();}, Config.animTimerBeforeStartFadeOut);
 	},
 	/* every Hit - a full row of at least 3-in-a-row - will be shifted off and dropped */
 	_parseNextHit : function() {
 		if (this._hits.length > 0) {
-			var hit = this._hits.shift();
-			this._turnScore = this._turnScore+hit.length*10;
-			setTimeout(function(){Game._fadeTileSet(hit);}, 20);
+			currentCellSet = this._hits.shift();
+			console.log('this.currentCellSet was set...');
+			this._turnScore = this._turnScore+currentCellSet.getLength()*10;
+			setTimeout(function(){currentCellSet.fadeOutSet();}, Config.animTimerAfterFadeOut);
 		} else {
 			this._increaseScore(this._turnScore); 
 			this._turnScore = 0;
 			this._interactable = true;
+			this.currentCellSet = null;
 		}
-	},
-	_fadeTileSet : function(tileSet) {
-		for (var h=0;h<tileSet.length;h++) {
-			tileSet[h].fadeOut(10, 10, 0, 1, Game.onFinishFadeTileSet(tileSet));
-		}
-	},	
-	onFinishFadeTileSet : function(tileSet) {
-		for(var t=0;t<tileSet.length;t++) {
-			this.matrix.removeCell(tileSet[t].x, tileSet[t].y);
-			this.stage.removeChild(tileSet[t].shape);
-		}
-		setTimeout(function(){Game._parseNextHit();}, 500);
 	},
 
 	/* animate a single hit frame per row */
@@ -258,9 +238,9 @@ var Game = {
 	},
 	_areCoordinatesAlreadyMatched : function(row) {
 		for (var h in this._hits) {
-			for (var h2 in this._hits[h]) {
+			for (var h2=0;h2<this._hits.getlength;h++) {
 				for (var n=0;n<row.length;n++) {
-					if (row[n].getId() == this._hits[h][h2].getId()) {
+					if (row[n].getId() == this._hits[h].get(h2).getId()) {
 						return true;
 					}
 				}
